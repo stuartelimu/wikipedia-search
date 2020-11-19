@@ -1,8 +1,6 @@
 const searchTermEl = document.querySelector('#searchTerm');
 const searchResultEl = document.querySelector('#searchResult');
 
-let timeOutId;
-
 searchTermEl.focus();
 
 
@@ -10,29 +8,39 @@ searchTermEl.addEventListener('input', function(event) {
     search(event.target.value);
 })
 
-const search = (searchTerm) => {
-    // reset the previous timer
-    if(timeOutId) {
-        clearTimeout(timeOutId);
-    }
+const debounce = (fn, delay=500) => {
 
-    // setup a new timer
-    timeOutId = setTimeout(async () => {
-        try {
-            const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&prop=info|extracts&inprop=url&utf8=&format=json&origin=*&srlimit=10&srsearch=${searchTerm}`;
-            const response = await fetch(url);
-            const searchResults = await response.json();
+    let timeoutId;
 
-            // show search results to console
-            console.log({
-                'term': searchTermEl,
-                'results': searchResults.query.search
-            })
-        } catch(error) {
-            console.log(error);
+    return (...args) => {
+        // cancel the previous timer
+        if(timeoutId) {
+            clearTimeout(timeoutId);
         }
-    }, 500);
-    
+
+        // setup a new timer
+        timeoutId = setTimeout(() => {
+            fn.apply(null, args);
+        }, delay)
+    }
 }
 
+
+const search = debounce(async (searchTerm) => {
+    
+    try {
+        const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&prop=info|extracts&inprop=url&utf8=&format=json&origin=*&srlimit=10&srsearch=${searchTerm}`;
+        const response = await fetch(url);
+        const searchResults = await response.json();
+
+        // show search results to console
+        console.log({
+            'term': searchTermEl,
+            'results': searchResults.query.search
+        })
+    } catch(error) {
+        console.log(error);
+    }
+    
+})
 
